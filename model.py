@@ -132,11 +132,11 @@ def plotly_orbit_plotter(orbit_list, attractor, intersections=None, labels=None)
 
     fig.update_layout(scene=dict(aspectmode="data"))
     # set the height of the plot to 600px
-    fig.update_layout(height=800)
+    fig.update_layout(height=800, legend=dict(x=0, y=1, orientation="h"))
 
     return fig
 
-def get_orbit_parameters(mission_epoch, attractor, orbit_name, altitude=500.0, ecc=0.0, inclination=135.0, raan=0.0, argp=0.0, nu=0.0):
+def get_orbit_parameters(mission_epoch, attractor, orbit_name, altitude=500.0, ecc=0.0, inclination=45.0, raan=0.0, argp=0.0, nu=0.0):
     """Returns the orbit parameters for a given orbit name."""
     # define any orbit based on streamlit inputs for all orbit parameters
     orbit_altitude = st.number_input(

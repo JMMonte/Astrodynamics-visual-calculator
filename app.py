@@ -114,8 +114,8 @@ with st.sidebar:
                 altitude=1221.0,
                 raan=0.0,
                 argp=29.0,
-                nu=4.0,
-                inclination=120.0
+                nu=185.0,
+                inclination=55.0
             )
             target_orbit = Orbit.from_classical(
                 target_orbit[0], # attractor
@@ -135,6 +135,8 @@ with st.sidebar:
 
             maneuver = Maneuver.lambert(initial_orbit, target_orbit)
             transfer_orbit = initial_orbit.apply_maneuver(maneuver, intermediate=True)[0]
+            print("transfer orbit [0]: ", initial_orbit.apply_maneuver(maneuver, intermediate=True)[0])
+            print("transfer orbit: ", initial_orbit.apply_maneuver(maneuver, intermediate=True))
             orbits = {"Initial Orbit" : initial_orbit,"Transfer Orbit" : transfer_orbit,"Target Orbit" : target_orbit}
 
 
@@ -182,26 +184,30 @@ if maneuver_type == "Hohmann transfer" or maneuver_type == "Lambert transfer":
     st.subheader("Maneuver:")
     col1, col2, col3, col4 = st.columns(4)
     # display the delta-v of the first impulse
-    impulse1 = maneuver.impulses[0][1]
-    col1.metric(value=f"{impulse1[0]:.2f}", label="Delta-V1")
-    # display the delta-v of the second impulse
-    impulse2 = maneuver.impulses[1][1]
-    col2.metric(value=f"{impulse2[0]:.2f}", label="Delta-V2")
+    # get absolute value of the delta-v of the first impulse
+    # calculate from the vector components
+    impulse1 = np.linalg.norm(maneuver.impulses[0][1])
+    impulse2 = np.linalg.norm(maneuver.impulses[1][1])
+    col1.metric(value=f"{impulse1:.2f}", label="Delta-V1")
+    col2.metric(value=f"{impulse2:.2f}", label="Delta-V2")
     col3.metric(
-        value=f"{np.linalg.norm(maneuver.impulses[0][1]) + np.linalg.norm(maneuver.impulses[1][1]):.2f}",
+        value=f"{maneuver.get_total_cost().to(u.m / u.s).value:.2f} m/s",
         label="Total Delta-V",
     )
     col4.metric(
-        value=f"{maneuver.get_total_time().to(u.s).value:.2f} s", label="Total time"
+        value=f"{maneuver.get_total_time().to(u.s).value:.2f} s", label="Total travel time"
     )
 
 elif maneuver_type == "Bielliptic transfer":
     st.subheader("Maneuver:")
+    impulse1 = np.linalg.norm(maneuver.impulses[0][1])
+    impulse2 = np.linalg.norm(maneuver.impulses[1][1])
+    impulse3 = np.linalg.norm(maneuver.impulses[2][1])
     col1, col2 = st.columns(2)
-    col1.metric(value=f"{maneuver.impulses[0][1].value[0]:.4f} m/s", label="Delta-V1")
-    col2.metric(value=f"{maneuver.impulses[1][1].value[0]:.4f} m/s", label="Delta-V2")
-    col1.metric(value=f"{maneuver.impulses[2][1].value[0]:.4f} m/s", label="Delta-V3")
-    col2.metric(value=f"{maneuver.get_total_cost():.4f} m/s", label="Total Delta-V")
+    col1.metric(value=f"{impulse1:.2f}", label="Delta-V1")
+    col2.metric(value=f"{impulse2:.2f}", label="Delta-V2")
+    col1.metric(value=f"{impulse3:.2f}", label="Delta-V3")
+    col2.metric(value=f"{maneuver.get_total_cost().to(u.m/u.s).value:.2f} m/s", label="Total Delta-V")
 
 # Convert orbits into pandas dataframe
 orbits_df = pd.DataFrame(

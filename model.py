@@ -370,7 +370,6 @@ def plot_groundplots(orbits, t_span, projection="equirectangular"):
         # get a random color for the orbit
         random = np.random.RandomState(1234)
         color = random.choice(colors)
-        print(color)
 
         gp.plot(
             spacecraft,

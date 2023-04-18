@@ -1,9 +1,10 @@
 # Orbit Maneuver Calculator
 
 This application calculates and visualizes different orbit maneuver types, including Hohmann transfers, Lambert transfers, and Bielliptic transfers. It also displays orbital parameters for initial, intermediate, and target orbits. The application is built using Streamlit and Plotly.
+![alt text](https://github.com/JMMonte/Astrodynamics-visualizer-calculator/blob/main/Screenshot%202023-04-18%20at%2003.45.37.png?raw=true)
 | | |
 |:-------------------------:|:-------------------------:|
-![alt text](https://github.com/JMMonte/Astrodynamics-visualizer-calculator/blob/main/Screenshot%202023-04-18%20at%2003.45.37.png?raw=true) | ![alt text](https://github.com/JMMonte/Astrodynamics-visualizer-calculator/blob/main/Screenshot%202023-04-18%20at%2003.47.47.png?raw=true) |
+![alt text](https://github.com/JMMonte/Astrodynamics-visualizer-calculator/blob/main/Screenshot%202023-04-18%20at%2003.48.09.png?raw=true) | ![alt text](https://github.com/JMMonte/Astrodynamics-visualizer-calculator/blob/main/Screenshot%202023-04-18%20at%2003.47.47.png?raw=true) |
 
 
 ## Features

@@ -16,6 +16,7 @@ This application calculates and visualizes different orbit maneuver types, inclu
 ## Requirements
 
 - numpy
+- plotly
 - pandas
 - streamlit
 - astropy

@@ -40,17 +40,17 @@ def define_main_attractors():
 def planet_texture(planet):
     """Returns the texture of a planet."""
     planet_textures = {
-        "Mercury": "https://www.solarsystemscope.com/textures/download/8k_mercury.jpg",
-        "Venus": "https://www.solarsystemscope.com/textures/download/2k_venus_atmosphere.jpg",
-        "Earth": "https://www.solarsystemscope.com/textures/download/8k_earth_daymap.jpg",
-        "Moon": "https://www.solarsystemscope.com/textures/download/8k_moon.jpg",
-        "Mars": "https://www.solarsystemscope.com/textures/download/8k_mars.jpg",
-        "Jupiter": "https://www.solarsystemscope.com/textures/download/8k_jupiter.jpg",
-        "Saturn": "https://www.solarsystemscope.com/textures/download/8k_saturn.jpg",
-        "Uranus": "https://www.solarsystemscope.com/textures/download/2k_uranus.jpg",
-        "Neptune": "https://www.solarsystemscope.com/textures/download/2k_neptune.jpg",
-        "Pluto": "https://www.solarsystemscope.com/textures/download/4k_ceres_fictional.jpg",
-        "Sun": "https://www.solarsystemscope.com/textures/download/2k_sun.jpg"
+        "Mercury": "textures/8k_mercury.jpg",
+        "Venus": "textures/2k_venus_atmosphere.jpg",
+        "Earth": "textures/8k_earth_daymap.jpg",
+        "Moon": "textures/8k_moon.jpg",
+        "Mars": "textures/8k_mars.jpg",
+        "Jupiter": "textures/8k_jupiter.jpg",
+        "Saturn": "textures/8k_saturn.jpg",
+        "Uranus": "textures/2k_uranus.jpg",
+        "Neptune": "textures/2k_neptune.jpg",
+        "Pluto": "textures/4k_ceres_fictional.jpg",
+        "Sun": "textures/2k_sun.jpg"
     }
     # Match planet name with texture
     return planet_textures[planet]
@@ -278,97 +278,26 @@ def show_maneuver_data(maneuver_type):
             """
             )
 
-def plot_groundtracks(orbits, attractor, texture_file: str):
-    groundtrack_data = []
-
-    for orbit_name, orbit in orbits.items():
-        groundtrack = GroundtrackPlotter(orbit)
-        lons, lats, _ = groundtrack.to_latlon()
-
-        groundtrack_data.append(
-            go.Scattergeo(
-                lon=lons,
-                lat=lats,
-                mode="lines",
-                name=orbit_name,
-                line=dict(width=2)
-            )
-        )
-
-    fig = go.Figure(
-        data=groundtrack_data,
-        layout=go.Layout(
-            title=dict(text=f"Groundtracks for {attractor.name}"),
-            showlegend=True,
-            geo=dict(
-                projection_type="equirectangular",
-                showland=True,
-                landcolor="rgb(243, 243, 243)",
-                countrycolor="rgb(204, 204, 204)",
-                bgcolor="rgba(0, 0, 0, 0)",
-                showocean=True,
-                oceancolor="rgb(0, 0, 255)",
-                showcountries=True,
-                showframe=False,
-                showcoastlines=True,
-                coastlinecolor="rgb(255, 255, 255)",
-                lonaxis=dict(range=[-180, 180]),
-                lataxis=dict(range=[-90, 90]),
-                showlakes=True,
-                lakecolor="rgb(0, 0, 255)",
-                showrivers=True,
-                rivercolor="rgb(0, 0, 255)",
-                projection_rotation_lon=-90,
-                center=dict(lat=0, lon=0),
-            ),
-        ),
-    )
-
-    fig.update_geos(
-        visible=True,
-        showcountries=True,
-        showcoastlines=True,
-        showlakes=True,
-        showocean=True,
-        oceancolor="rgb(0, 0, 255)",
-        resolution=50,
-        bgcolor="rgba(0, 0, 0, 0)",
-        projection_rotation_lon=-90,
-        center=dict(lat=0, lon=0),
-    )
-
-    fig.update_geos(projection_type="equirectangular")
-
-    # Add the planet texture to the background
-    fig.update_geos(
-        showland=True,
-        landcolor="rgba(0, 0, 0, 0)",
-        showocean=True,
-        oceancolor="rgba(0, 0, 0, 0)",
-        showlakes=True,
-        lakecolor="rgba(0, 0, 0, 0)",
-        showrivers=True,
-        rivercolor="rgba(0, 0, 0, 0)",
-        bgcolor="rgba(0, 0, 0, 0)",
-        fitbounds="locations",
-        landimage=texture_file
-    )
-
-    return fig
-
-def plot_groundplots(orbits, t_span, projection="equirectangular"):
+def plot_groundplots(orbits, t_span, projection="equirectangular",title="Groundtrack of Orbits",resolution=50):
     # Generate an instance of the plotter, add title and show latlon grid
     gp = GroundtrackPlotter()
-    gp.update_layout(title="Groundtrack of Orbits")
+    gp.update_layout(title=title)
 
-    colors = ["red", "blue", "green", "purple", "orange", "yellow"]
+    # color dictionary for the orbits
+    colors = {
+        "Initial Orbit": "red",
+        "Transfer Orbit": "blue",
+        "Target Orbit": "green",
+        "Intermediate Orbit 1": "orange",
+        "Intermediate Orbit 2": "purple",
+    }
+    #match the color dictionary to the orbit dictionary
+    colors = {key: colors[key] for key in orbits.keys()}
 
     # Plot each orbit in the dictionary
     for label, orbit in orbits.items():
         spacecraft = EarthSatellite(orbit, None)
-        # get a random color for the orbit
-        random = np.random.RandomState(1234)
-        color = random.choice(colors)
+        color = colors[label]
 
         gp.plot(
             spacecraft,
@@ -396,7 +325,7 @@ def plot_groundplots(orbits, t_span, projection="equirectangular"):
             showsubunits=True,
             projection_type=projection,
             showframe=True,
-            resolution=50,
+            resolution=resolution,
             bgcolor="rgba(0, 0, 0,0)",
         ),
     )

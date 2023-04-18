@@ -154,7 +154,7 @@ pyvo==1.4.1
 PyYAML==6.0
 pyzmq==24.0.1
 queuelib==1.6.2
-requests==2.28.2
+requests==2.4.3
 requests-file==1.5.1
 rich==13.3.3
 schedule==1.1.0
@@ -174,8 +174,6 @@ stack-data==0.6.2
 statsmodels==0.13.5
 streamlit==1.20.0
 sympy==1.11.1
-ta==0.10.2
-TA-Lib==0.4.25
 tenacity==8.2.2
 terminado==0.17.0
 tinycss2==1.2.1

@@ -1,4 +1,5 @@
 # Orbit Maneuver Calculator
+
 This application calculates and visualizes different orbit maneuver types, including Hohmann transfers, Lambert transfers, and Bielliptic transfers. It also displays orbital parameters for initial, intermediate, and target orbits. The application is built using Streamlit and Plotly.
 
 ## Features
@@ -40,7 +41,7 @@ Copy code
 streamlit run app.py
 ```
 
-Open your browser and go to http://localhost:8501 to view the application.
+Open your browser and go to <http://localhost:8501> to view the application.
 
 ## Application Structure
 

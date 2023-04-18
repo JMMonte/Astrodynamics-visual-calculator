@@ -9,7 +9,6 @@ from poliastro.bodies import *
 from poliastro.maneuver import Maneuver
 from poliastro.earth.plotting import GroundtrackPlotter
 from poliastro.earth import EarthSatellite
-from typing import List
 
 
 def configure_page():

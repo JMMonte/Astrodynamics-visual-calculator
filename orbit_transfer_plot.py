@@ -1,6 +1,6 @@
 import numpy as np
 from astropy import units as u
-from poliastro.bodies import Earth
+from poliastro.bodies import *
 from poliastro.maneuver import Maneuver
 from poliastro.twobody import Orbit
 import plotly.graph_objs as go
@@ -15,14 +15,14 @@ class OrbitTransferPlot:
         fig = self._create_figure(zoom=True)
         return fig
 
-    def _create_figure(self, zoom=False):
-        R = np.linspace(2, 75, num=100)
+    def _create_figure(self, zoom=False,attractor=Earth):
+        R = np.linspace(2, 75, num=200)
         Rstar = [15.58, 40, 60, 100, 200, np.inf]
 
         hohmann_data = np.zeros_like(R)
         bielliptic_data = np.zeros((len(R), len(Rstar)))
 
-        ss_i = Orbit.circular(Earth, 1.8 * u.km)
+        ss_i = Orbit.circular(attractor, 1.8 * u.km)
         r_i = ss_i.a
         v_i = np.sqrt(ss_i.v @ ss_i.v)
         for ii, r in enumerate(R):

@@ -9,6 +9,7 @@ from poliastro.util import time_range
 from model import *
 from orbit_transfer_plot import *
 from lambert_plot import *
+from get_position_velocity import *
 
 configure_page()
 planets = define_main_attractors()
@@ -20,8 +21,11 @@ st.write("This app is a work in progress. Please report any issues on the [GitHu
 st.sidebar.markdown(f'''
     Mission epoch: {mission_epoch}
     ''')
-with st.expander("Recomended understanding to use this app"):
-    st.info("This app is intended to be used by people who have a basic understanding of orbital mechanics. If you are not familiar with the concepts of orbital mechanics, you can check out the [Orbital Mechanics for Engineering Students](http://www.nssc.ac.cn/wxzygx/weixin/201607/P020160718380095698873.pdf) book. This app is based on the [poliastro](https://docs.poliastro.space/en/stable/) library. You can check out the [documentation](https://docs.poliastro.space/en/stable/) for more information about the library.")
+st.info("👈 To get started, open the sidebar on the left and select the main attractor (the body around which the spacecraft will orbit) and the maneuver type. Then, select the initial orbit and the target orbit. The app will calculate the maneuver and display the results.")
+with st.expander("⚠️ Recomended reading before you use this app"):
+    r'''
+    This app is intended to be used by people who have a basic understanding of orbital mechanics. If you are not familiar with the concepts of orbital mechanics, you can check out the [Orbital Mechanics for Engineering Students](http://www.nssc.ac.cn/wxzygx/weixin/201607/P020160718380095698873.pdf) book. This app is based on the [poliastro](https://docs.poliastro.space/en/stable/) library. You can check out the [documentation](https://docs.poliastro.space/en/stable/) for more information about the library.
+    '''
     # First lets explain the difference between the two types of maneuvers: Hohmann and Bielliptic
     st.header("A comparisson between Hohmann and Bielliptic transfers")
     st.write("There are many types of maneuvers that can be performed in space. The two most common ones are the Hohmann transfer and the Bielliptic transfer. The Hohmann transfer is a maneuver that can be used to transfer from one orbit to another orbit with the same inclination. The Bielliptic transfer is a maneuver that can be used to transfer from one orbit to another orbit with different inclinations. Here's a comparisson between the two types of maneuvers:")
@@ -34,6 +38,9 @@ with st.expander("Recomended understanding to use this app"):
         st.plotly_chart(fig_normal, use_container_width=True)
     with column2:
         st.plotly_chart(fig_zoomed, use_container_width=True)
+
+    r'''As you can see, there are scenarios where the Hohmann transfer is more efficient than the Bielliptic transfer and vice versa. The Hohmann transfer is more efficient when the inclination of the target orbit is close to the inclination of the initial orbit. The Bielliptic transfer is more efficient when the inclination of the target orbit is far from the inclination of the initial orbit. The Bielliptic transfer is also more efficient when the target orbit is far from the initial orbit. The Hohmann transfer is more efficient when the target orbit is close to the initial orbit.
+    '''
 
     st.header("Lambert's Problem Visualized")
     r'''
@@ -66,8 +73,8 @@ with st.expander("Recomended understanding to use this app"):
 
 with st.sidebar:
     st.subheader("Maneuver planner")
-    attractor = st.selectbox("Select the main attractor", list(planets.keys()))
-    attractor = planets[attractor]
+    attractor_select = st.selectbox("Select the main attractor", list(planets.keys()))
+    attractor = planets[attractor_select]
     maneuver_type = st.selectbox("Select the maneuver type", list(maneuver.keys()))
     with st.expander("Initial orbit details"):
         initial_orbit = get_orbit_parameters(
@@ -90,7 +97,7 @@ with st.sidebar:
             target_orbit_altitude = st.number_input(
                 "Target orbit apogee altitude (km)", min_value=0.0, value=541.0
             )
-            target_orbit_radius = (target_orbit_altitude * u.km) + attractor.R.to(u.km)
+            target_orbit_radius = (target_orbit_altitude * u.km) + attractor.R.to(u.km) #true for circular orbits
             maneuver = Maneuver.hohmann(initial_orbit, target_orbit_radius)
             transfer_orbit = initial_orbit.apply_maneuver(maneuver, intermediate=True)[0]
             # get target orbit from the target orbit radius and the remaining initial orbit parameters. must be circular.
@@ -212,12 +219,15 @@ orbits_df = pd.DataFrame(
     {
         "Semi-major axis (km)": [orbit.a.to(u.km).value for orbit in orbits.values()],
         "Eccentricity": [orbit.ecc.value for orbit in orbits.values()],
+        "Periapsis from surface (km)": [(orbit.a.to(u.km).value * (1 - orbit.ecc.value) - attractor.R.to(u.km).value) for orbit in orbits.values()],
+        "Apoapsis from surface (km)": [(orbit.a.to(u.km).value * (1 + orbit.ecc.value) - attractor.R.to(u.km).value) for orbit in orbits.values()],
         "Inclination (deg)": [orbit.inc.to(u.deg).value for orbit in orbits.values()],
         "RAAN (deg)": [orbit.raan.to(u.deg).value for orbit in orbits.values()],
         "Argument of periapsis (deg)": [
             orbit.argp.to(u.deg).value for orbit in orbits.values()
         ],
         "True anomaly (deg)": [orbit.nu.to(u.deg).value for orbit in orbits.values()],
+        "Period (s)": [orbit.period.to(u.s).value for orbit in orbits.values()],
         "Epoch": [orbit.epoch.iso for orbit in orbits.values()],
     },
     index=orbits.keys(),
@@ -225,13 +235,121 @@ orbits_df = pd.DataFrame(
 # Display the orbits dataframe
 st.dataframe(orbits_df, use_container_width=True)
 show_maneuver_data(maneuver_type)
+# Create an instance of OrbitElements
+initial_orbit_elements = GetPositionVectors(initial_orbit)
+target_orbit_elements = GetPositionVectors(target_orbit)
+
+# Get position and velocity at periapsis of initial orbit (0 degrees true anomaly)
+nu_periapsis_initial = 0 * u.deg
+position_periapsis_initial, velocity_periapsis_initial = initial_orbit_elements.get_position_velocity(nu_periapsis_initial)
+
+# Get position and velocity at apoapsis of initial orbit (180 degrees true anomaly)
+nu_apoapsis_initial = 180 * u.deg
+position_apoapsis_initial, velocity_apoapsis_initial = initial_orbit_elements.get_position_velocity(nu_apoapsis_initial)
+
+# Get position and velocity at periapsis of target orbit (0 degrees true anomaly)
+nu_periapsis_target = 0 * u.deg
+position_periapsis_target, velocity_periapsis_target = target_orbit_elements.get_position_velocity(nu_periapsis_target)
+
+# Get position and velocity at apoapsis of target orbit (180 degrees true anomaly)
+nu_apoapsis_target = 180 * u.deg
+position_apoapsis_target, velocity_apoapsis_target = target_orbit_elements.get_position_velocity(nu_apoapsis_target)
+
+# add a dataframe with the positions and velocities of the orbits
+st.subheader("Positions of Initial and Target orbits (km)")
+df_initial_and_target_positions = pd.DataFrame(
+    {
+        "Periapsis (x,y,z) (km)": [position_periapsis_initial, position_periapsis_target],
+        "Apoapsis (x,y,z) (km)": [position_apoapsis_initial, position_apoapsis_target],
+    },
+    index=["Initial orbit", "Target orbit"],
+)
+st.dataframe(df_initial_and_target_positions, use_container_width=True)
+
+positions = {
+    "I Periapsis": position_periapsis_initial,
+    "I Apoapsis": position_apoapsis_initial,
+    "T Periapsis": position_periapsis_target,
+    "T Apoapsis": position_apoapsis_target,
+}
+
+# Create an instance of transfer orbit OrbitElements
+if maneuver_type == "Hohmann transfer" or maneuver_type == "Lambert transfer":
+    transfer_orbit_elements = GetPositionVectors(transfer_orbit)
+
+    # Get position and velocity at periapsis of transfer orbit (0 degrees true anomaly)
+    nu_periapsis_transfer = 0 * u.deg
+    position_periapsis_transfer, velocity_periapsis_transfer = transfer_orbit_elements.get_position_velocity(nu_periapsis_transfer)
+
+    # Get position and velocity at apoapsis of transfer orbit (180 degrees true anomaly)
+    nu_apoapsis_transfer = 180 * u.deg
+    position_apoapsis_transfer, velocity_apoapsis_transfer = transfer_orbit_elements.get_position_velocity(nu_apoapsis_transfer)
+
+    # add a dataframe with the positions of the periapsis and apoapsis of the transfer orbit
+    df_transfer_orbit_positions = pd.DataFrame(
+        {
+            "Periapsis (x,y,z) (km)": [position_periapsis_transfer],
+            "Apoapsis (x,y,z) (km)": [position_apoapsis_transfer],
+        },
+        index=["Homann Transfer Orbit"],
+    )
+    st.subheader("Positions of Transfer orbit (km)")
+    st.dataframe(df_transfer_orbit_positions, use_container_width=True)
+
+    positions.update(
+        {
+            "Trans Periapsis": position_periapsis_transfer,
+            "Trans Apoapsis": position_apoapsis_transfer,
+        }
+    )
+
+elif maneuver_type == "Bielliptic transfer":
+    intermediate_orbit_elements_1 = GetPositionVectors(intermediate_orbit_1)
+    intermediate_orbit_elements_2 = GetPositionVectors(intermediate_orbit_2)
+
+    # Get position and velocity at periapsis of intermediate orbit 1 (0 degrees true anomaly)
+    nu_periapsis_intermediate_1 = 0 * u.deg
+    position_periapsis_intermediate_1, velocity_periapsis_intermediate_1 = intermediate_orbit_elements_1.get_position_velocity(nu_periapsis_intermediate_1)
+
+    # Get position and velocity at apoapsis of intermediate orbit 1 (180 degrees true anomaly)
+    nu_apoapsis_intermediate_1 = 180 * u.deg
+    position_apoapsis_intermediate_1, velocity_apoapsis_intermediate_1 = intermediate_orbit_elements_1.get_position_velocity(nu_apoapsis_intermediate_1)
+
+    # Get position and velocity at periapsis of intermediate orbit 2 (0 degrees true anomaly)
+    nu_periapsis_intermediate_2 = 0 * u.deg
+    position_periapsis_intermediate_2, velocity_periapsis_intermediate_2 = intermediate_orbit_elements_2.get_position_velocity(nu_periapsis_intermediate_2)
+
+    # Get position and velocity at apoapsis of intermediate orbit 2 (180 degrees true anomaly)
+    nu_apoapsis_intermediate_2 = 180 * u.deg
+    position_apoapsis_intermediate_2, velocity_apoapsis_intermediate_2 = intermediate_orbit_elements_2.get_position_velocity(nu_apoapsis_intermediate_2)
+
+    #add a dataframe to show the position vectors of the intermediate orbits
+    st.subheader("Position vectors of the intermediate orbits (km)")
+    df_intermediate_orbits = pd.DataFrame(
+        {
+            "Periapsis (x,y,z)": [position_periapsis_intermediate_1, position_periapsis_intermediate_2],
+            "Apoapsis (x,y,z)": [position_apoapsis_intermediate_1, position_apoapsis_intermediate_2],
+        },
+        index=["Intermediate orbit 1", "Intermediate orbit 2"],
+    )
+    st.dataframe(df_intermediate_orbits, use_container_width=True)
+
+    positions.update(
+        {
+            "Trans1 Periapsis": position_periapsis_intermediate_1,
+            "Trans1 Apoapsis": position_apoapsis_intermediate_1,
+            "Trans2 Periapsis": position_periapsis_intermediate_2,
+            "Trans2 Apoapsis": position_apoapsis_intermediate_2,
+        }
+    )
 
 # plot the orbits using plotly
 st.subheader("Orbits projection:")
 fig1 = plotly_orbit_plotter(
     orbits.values(),
     attractor,
-    labels=orbits.keys()
+    labels=orbits.keys(),
+    positions=positions
 )
 
 st.plotly_chart(fig1, use_container_width=True)

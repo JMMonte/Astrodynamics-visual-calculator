@@ -20,7 +20,6 @@ def configure_page():
         initial_sidebar_state="expanded",
     )
 
-
 def define_main_attractors():
     """Returns a dictionary of the main attractors in the solar system."""
     return {
@@ -66,8 +65,7 @@ def to_unit(value, unit):
     else:  # days
         return value * u.day
 
-
-def plotly_orbit_plotter(orbit_list, attractor, maneuvers=None, labels=None):
+def plotly_orbit_plotter(orbit_list, attractor, positions=None, labels=None):
     """Plots a list of orbits in 3D using plotly.
     Parameters:
     orbit_list: list of poliastro.twobody.orbit.Orbit
@@ -96,25 +94,27 @@ def plotly_orbit_plotter(orbit_list, attractor, maneuvers=None, labels=None):
                 z=z,
                 mode="lines",
                 name=label,
+                
             )
         )
 
-    if maneuvers is not None:
-        for maneuver in maneuvers:
-            orbit, time, delta_v = maneuver
-            r = orbit.propagate(time).rv()
-            x, y, z = r[0].to(u.km).value, r[1].to(u.km).value, r[2].to(u.km).value
+    if positions is not None:
+        for pos_label, pos_data in positions.items():
+            x, y, z = pos_data[0].to(u.km).value, pos_data[1].to(u.km).value, pos_data[2].to(u.km).value
             fig.add_trace(
                 go.Scatter3d(
                     x=[x],
                     y=[y],
                     z=[z],
                     mode="markers+text",
-                    marker=dict(size=8, color="red", opacity=1),
-                    text=[f"Δv: {delta_v:.2f}, t: {time}"],
+                    marker=dict(size=8, opacity=1),
+                    text=[pos_label],
                     textposition="bottom center",
+                    showlegend=True,
+                    name=pos_label, # add legend for each position marker
                 )
             )
+            
 
     # Add attractor
     u_rad = u.km
@@ -137,19 +137,42 @@ def plotly_orbit_plotter(orbit_list, attractor, maneuvers=None, labels=None):
 
     return fig
 
+def semimajor_axis_from_periapsis(periapsis, eccentricity, attractor_radius):
+    """
+    Calculate the semi-major axis of an orbit from its periapsis distance and eccentricity.
+
+    Parameters:
+    periapsis (float): The periapsis distance (in kilometers)
+    eccentricity (float): The eccentricity of the orbit (dimensionless)
+
+    Returns:
+    float: The semi-major axis (in kilometers)
+    """
+
+    # Convert the periapsis distance to meters
+    periapsis_m = periapsis * 1000.0
+    periapsis_distance = periapsis_m + attractor_radius
+
+    # Calculate the semi-major axis
+    semi_major_axis_m = periapsis_distance / (1.0 - eccentricity)
+
+    # Convert the semi-major axis back to kilometers
+    semi_major_axis_km = semi_major_axis_m / 1000.0
+
+    return semi_major_axis_km
+
 
 def get_orbit_parameters(mission_epoch, attractor, orbit_name, altitude=500.0, ecc=0.0, inclination=45.0, raan=0.0, argp=0.0, nu=0.0):
     """Returns the orbit parameters for a given orbit name."""
     # define any orbit based on streamlit inputs for all orbit parameters
-    orbit_altitude = st.number_input(
-        "Orbit altitude [km]",
+    orbit_periapsis = st.number_input(
+        "Orbit periapsis altitude [km]",
         min_value=0.0,
         value=altitude,
         step=50.0,
         key=f"{orbit_name}_altitude",
         help="Altitude of the orbit above the Planet's surface (counted from equatorial radius).",
     )
-    orbit_altitude = orbit_altitude + attractor.R.to(u.km).value
     orbit_ecc = st.number_input(
         "Orbit eccentricity",
         min_value=0.0,
@@ -159,6 +182,7 @@ def get_orbit_parameters(mission_epoch, attractor, orbit_name, altitude=500.0, e
         key=f"{orbit_name}_ecc",
         help="Eccentricity of the orbit is the ratio of the distance between the two foci of the ellipse and the distance between the center of the ellipse and one of the foci. For more information, see https://en.wikipedia.org/wiki/Eccentricity_(mathematics)",
     )
+    orbit_a = semimajor_axis_from_periapsis(orbit_periapsis,orbit_ecc, attractor.R.to(u.m).value)
     orbit_inclination = st.number_input(
         "Orbit inclination [deg]",
         min_value=0.0,
@@ -197,7 +221,7 @@ def get_orbit_parameters(mission_epoch, attractor, orbit_name, altitude=500.0, e
     )
     orbit_name = (
         attractor,
-        orbit_altitude * u.km,
+        orbit_a * u.km,
         orbit_ecc * u.one,
         orbit_inclination * u.deg,
         orbit_raan * u.deg,

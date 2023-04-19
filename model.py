@@ -67,15 +67,15 @@ def to_unit(value, unit):
         return value * u.day
 
 
-def plotly_orbit_plotter(orbit_list, attractor, intersections=None, labels=None):
+def plotly_orbit_plotter(orbit_list, attractor, maneuvers=None, labels=None):
     """Plots a list of orbits in 3D using plotly.
     Parameters:
     orbit_list: list of poliastro.twobody.orbit.Orbit
         List of orbits to plot
     attractor: poliastro.bodies.Body
         Main attractor of the orbits
-    intersections: list of poliastro.twobody.orbit.Orbit
-        List of orbits to plot as intersections
+    maneuvers: list of tuples
+        List of tuples containing maneuver impulse data in the format (Orbit, time, delta-v)
     labels: list of str
         List of labels for the orbits
     Returns:
@@ -89,7 +89,6 @@ def plotly_orbit_plotter(orbit_list, attractor, intersections=None, labels=None)
     for orbit, label in zip(orbit_list, labels):
         r = orbit.sample().xyz.T
         x, y, z = r[:, 0].to(u.km).value, r[:, 1].to(u.km).value, r[:, 2].to(u.km).value
-        # get color of orbit from orbit name
         fig.add_trace(
             go.Scatter3d(
                 x=x,
@@ -99,6 +98,24 @@ def plotly_orbit_plotter(orbit_list, attractor, intersections=None, labels=None)
                 name=label,
             )
         )
+
+    if maneuvers is not None:
+        for maneuver in maneuvers:
+            orbit, time, delta_v = maneuver
+            r = orbit.propagate(time).rv()
+            x, y, z = r[0].to(u.km).value, r[1].to(u.km).value, r[2].to(u.km).value
+            fig.add_trace(
+                go.Scatter3d(
+                    x=[x],
+                    y=[y],
+                    z=[z],
+                    mode="markers+text",
+                    marker=dict(size=8, color="red", opacity=1),
+                    text=[f"Δv: {delta_v:.2f}, t: {time}"],
+                    textposition="bottom center",
+                )
+            )
+
     # Add attractor
     u_rad = u.km
     thetas = u.Quantity(np.linspace(0, 2 * np.pi, 100), u.rad)
@@ -109,32 +126,17 @@ def plotly_orbit_plotter(orbit_list, attractor, intersections=None, labels=None)
     y_center = radius_equatorial * np.outer(np.sin(thetas), np.sin(phis))
     z_center = radius_polar * np.outer(np.ones_like(thetas), np.cos(phis))
 
-    # add a streamlit dropdown to select the color scale
-
     fig.add_trace(
         go.Surface(
             x=x_center, y=y_center, z=z_center, colorscale="Viridis", showscale=False
         )
     )
 
-    # Add intersections
-    if intersections is not None:
-        for intersection in intersections:
-            x, y, z = intersection["point"].to(u.km).value
-            scatter = go.Scatter3d(
-                x=[x],
-                y=[y],
-                z=[z],
-                mode="markers",
-                marker=dict(size=8, color="purple", opacity=1),
-            )
-            fig.add_trace(scatter)
-
     fig.update_layout(scene=dict(aspectmode="data"))
-    # set the height of the plot to 600px
     fig.update_layout(height=800, legend=dict(x=0, y=1, orientation="h"))
 
     return fig
+
 
 def get_orbit_parameters(mission_epoch, attractor, orbit_name, altitude=500.0, ecc=0.0, inclination=45.0, raan=0.0, argp=0.0, nu=0.0):
     """Returns the orbit parameters for a given orbit name."""

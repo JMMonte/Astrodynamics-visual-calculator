@@ -135,8 +135,6 @@ with st.sidebar:
 
             maneuver = Maneuver.lambert(initial_orbit, target_orbit)
             transfer_orbit = initial_orbit.apply_maneuver(maneuver, intermediate=True)[0]
-            print("transfer orbit [0]: ", initial_orbit.apply_maneuver(maneuver, intermediate=True)[0])
-            print("transfer orbit: ", initial_orbit.apply_maneuver(maneuver, intermediate=True))
             orbits = {"Initial Orbit" : initial_orbit,"Transfer Orbit" : transfer_orbit,"Target Orbit" : target_orbit}
 
 
@@ -233,7 +231,7 @@ st.subheader("Orbits projection:")
 fig1 = plotly_orbit_plotter(
     orbits.values(),
     attractor,
-    labels=orbits.keys(),
+    labels=orbits.keys()
 )
 
 st.plotly_chart(fig1, use_container_width=True)

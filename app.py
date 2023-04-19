@@ -19,7 +19,7 @@ mission_epoch = get_mission_epoch()
 st.title("Orbit maneuver calculator")
 st.write("This app is a work in progress. Please report any issues on the [GitHub repo](https://github.com/JMMonte/Astrodynamics-visual-calculator).")
 st.sidebar.markdown(f'''
-    Mission epoch: {mission_epoch}
+    Mission epoch: {mission_epoch} UTC
     ''')
 st.info("👈 To get started, open the sidebar on the left and select the main attractor (the body around which the spacecraft will orbit) and the maneuver type. Then, select the initial orbit and the target orbit. The app will calculate the maneuver and display the results.")
 with st.expander("⚠️ Recomended reading before you use this app"):
@@ -255,16 +255,24 @@ position_periapsis_target, velocity_periapsis_target = target_orbit_elements.get
 nu_apoapsis_target = 180 * u.deg
 position_apoapsis_target, velocity_apoapsis_target = target_orbit_elements.get_position_velocity(nu_apoapsis_target)
 
+# Calculate absolute velocity at point
+velocity_periapsis_initial_abs = np.linalg.norm(velocity_periapsis_initial)
+velocity_apoapsis_initial_abs = np.linalg.norm(velocity_apoapsis_initial)
+velocity_periapsis_target_abs = np.linalg.norm(velocity_periapsis_target)
+velocity_apoapsis_target_abs = np.linalg.norm(velocity_apoapsis_target)
+
 # add a dataframe with the positions and velocities of the orbits
-st.subheader("Positions of Initial and Target orbits (km)")
 df_initial_and_target_positions = pd.DataFrame(
     {
+        "Periapsis velocity (m/s)": velocity_periapsis_initial_abs.to(u.m / u.s),
+        "Apoapsis velocity (m/s)": velocity_apoapsis_initial_abs.to(u.m / u.s),
         "Periapsis (x,y,z) (km)": [position_periapsis_initial, position_periapsis_target],
         "Apoapsis (x,y,z) (km)": [position_apoapsis_initial, position_apoapsis_target],
     },
     index=["Initial orbit", "Target orbit"],
 )
-st.dataframe(df_initial_and_target_positions, use_container_width=True)
+with st.expander("Show positions and velocities of Initial and Target orbits"):
+    st.dataframe(df_initial_and_target_positions, use_container_width=True)
 
 positions = {
     "I Periapsis": position_periapsis_initial,
@@ -285,16 +293,22 @@ if maneuver_type == "Hohmann transfer" or maneuver_type == "Lambert transfer":
     nu_apoapsis_transfer = 180 * u.deg
     position_apoapsis_transfer, velocity_apoapsis_transfer = transfer_orbit_elements.get_position_velocity(nu_apoapsis_transfer)
 
+    # Calculate absolute velocity at point
+    velocity_periapsis_transfer_abs = np.linalg.norm(velocity_periapsis_transfer)
+    velocity_apoapsis_transfer_abs = np.linalg.norm(velocity_apoapsis_transfer)
+
     # add a dataframe with the positions of the periapsis and apoapsis of the transfer orbit
     df_transfer_orbit_positions = pd.DataFrame(
         {
+            "Periapsis velocity (m/s)": velocity_periapsis_transfer_abs.to(u.m / u.s),
+            "Apoapsis velocity (m/s)": velocity_apoapsis_transfer_abs.to(u.m / u.s),
             "Periapsis (x,y,z) (km)": [position_periapsis_transfer],
             "Apoapsis (x,y,z) (km)": [position_apoapsis_transfer],
         },
         index=["Homann Transfer Orbit"],
     )
-    st.subheader("Positions of Transfer orbit (km)")
-    st.dataframe(df_transfer_orbit_positions, use_container_width=True)
+    with st.expander("Show positions and velocities of transfer orbit"):
+        st.dataframe(df_transfer_orbit_positions, use_container_width=True)
 
     positions.update(
         {
@@ -323,16 +337,24 @@ elif maneuver_type == "Bielliptic transfer":
     nu_apoapsis_intermediate_2 = 180 * u.deg
     position_apoapsis_intermediate_2, velocity_apoapsis_intermediate_2 = intermediate_orbit_elements_2.get_position_velocity(nu_apoapsis_intermediate_2)
 
+    # Calculate absolute velocity at point
+    velocity_periapsis_intermediate_1_abs = np.linalg.norm(velocity_periapsis_intermediate_1)
+    velocity_apoapsis_intermediate_1_abs = np.linalg.norm(velocity_apoapsis_intermediate_1)
+    velocity_periapsis_intermediate_2_abs = np.linalg.norm(velocity_periapsis_intermediate_2)
+    velocity_apoapsis_intermediate_2_abs = np.linalg.norm(velocity_apoapsis_intermediate_2)
+
     #add a dataframe to show the position vectors of the intermediate orbits
-    st.subheader("Position vectors of the intermediate orbits (km)")
     df_intermediate_orbits = pd.DataFrame(
         {
+            "Periapsis velocity (m/s)": [velocity_periapsis_intermediate_1_abs.to(u.m / u.s), velocity_periapsis_intermediate_2_abs.to(u.m / u.s)],
+            "Apoapsis velocity (m/s)": [velocity_apoapsis_intermediate_1_abs.to(u.m / u.s), velocity_apoapsis_intermediate_2_abs.to(u.m / u.s)],
             "Periapsis (x,y,z)": [position_periapsis_intermediate_1, position_periapsis_intermediate_2],
             "Apoapsis (x,y,z)": [position_apoapsis_intermediate_1, position_apoapsis_intermediate_2],
         },
         index=["Intermediate orbit 1", "Intermediate orbit 2"],
     )
-    st.dataframe(df_intermediate_orbits, use_container_width=True)
+    with st.expander("Show positions and velocities of intermediate orbits"):
+        st.dataframe(df_intermediate_orbits, use_container_width=True)
 
     positions.update(
         {

@@ -11,8 +11,8 @@ class GetPositionVectors:
         self.raan = orbit.raan
         self.argp = orbit.argp
         self.body = orbit.attractor
-        self.k = orbit.attractor.k.to(u.km**3 / u.s**2).value  # Gravitational parameter in km^3/s^2
-        self.p = (self.a * (1 - self.ecc**2)).to(u.km).value  # Semi-latus rectum in km
+        self.k = orbit.attractor.k.to(u.km**3 / u.s**2)  # Gravitational parameter in km^3/s^2
+        self.p = (self.a * (1 - self.ecc**2)).to(u.km)  # Semi-latus rectum in km
 
     def get_position_velocity(self, nu):
         '''
@@ -22,7 +22,7 @@ class GetPositionVectors:
                               self.raan.to(u.rad).value, self.argp.to(u.rad).value, nu.to(u.rad).value)
 
         position = r_ijk * u.km
-        velocity = v_ijk * u.m / u.s
+        velocity = v_ijk * u.km / u.s
 
         return position, velocity
     

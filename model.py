@@ -121,7 +121,10 @@ def plotly_orbit_plotter(orbit_list, attractor, positions=None, labels=None):
     thetas = u.Quantity(np.linspace(0, 2 * np.pi, 100), u.rad)
     phis = u.Quantity(np.linspace(0, np.pi, 100), u.rad)
     radius_equatorial = attractor.R.to(u_rad).value
-    radius_polar = attractor.R_polar.to(u_rad).value
+    if attractor.R_polar is None:
+        radius_polar = radius_equatorial
+    else:
+        radius_polar = attractor.R_polar.to(u_rad).value
     x_center = radius_equatorial * np.outer(np.cos(thetas), np.sin(phis))
     y_center = radius_equatorial * np.outer(np.sin(thetas), np.sin(phis))
     z_center = radius_polar * np.outer(np.ones_like(thetas), np.cos(phis))

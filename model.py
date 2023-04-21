@@ -9,7 +9,7 @@ from poliastro.bodies import *
 from poliastro.maneuver import Maneuver
 from poliastro.earth.plotting import GroundtrackPlotter
 from poliastro.earth import EarthSatellite
-
+import matplotlib.pyplot as plt
 
 def configure_page():
     """Configures the page layout and title."""

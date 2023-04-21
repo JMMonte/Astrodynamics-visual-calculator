@@ -2,7 +2,7 @@
 
 This application calculates and visualizes different orbit maneuver types, including Hohmann transfers, Lambert transfers, and Bielliptic transfers. It also displays orbital parameters for initial, intermediate, and target orbits. The application is built using Streamlit and Plotly.
 
-![3d Orbit Visualizer](/Screenshot%202023-04-18%20at%2003.45.37.png)
+![3d Orbit Visualizer](/Screenshot%202023-04-21%20at%2001.47.50.png)
 
 | Map closeup | Orthographic projection |
 |:-------------------------:|:-------------------------:|
